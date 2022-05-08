@@ -1,3 +1,8 @@
-Color utilities for color experiments!
+⚠️ **This package is not meant for public use**
 
-This is not meant to be usable package, it's just a draft.
+A small package for color utilities:
+- types
+- IO
+- text representation
+- simple color quantization.
+

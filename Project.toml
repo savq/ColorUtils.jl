@@ -2,3 +2,6 @@ name = "ColorUtils"
 uuid = "e7ad76ee-1682-4ca9-9390-52e61ddf3d41"
 authors = ["Sergio Alejandro Vargas <savargasqu+git@unal.edu.co>"]
 version = "0.1.0"
+
+[extras]
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
