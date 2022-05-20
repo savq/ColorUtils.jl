@@ -1,7 +1,7 @@
 name = "ColorUtils"
 uuid = "e7ad76ee-1682-4ca9-9390-52e61ddf3d41"
 authors = ["Sergio Alejandro Vargas <savargasqu+git@unal.edu.co>"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"

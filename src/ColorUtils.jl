@@ -1,59 +1,87 @@
-module ColorUtils
+"""
+Utilities for 8-bit/256 and 24-bit/RGB colors.
+"""
+# module ColorUtils
+
+import Core: UInt32
+import Base: iterate, print, show, parse
 
 export Color256
 export ColorRGB
+export @rgb_str
+
 export quantize
-export generate_xterm_colors
-export check_term_colors
 
-import Base.parse
-import Base.iterate
+abstract type TermColor end
 
-abstract type AbstractColor end
-
-struct Color256 <: AbstractColor
+"8-bit color"
+struct Color256 <: TermColor
     v::UInt8
 end
 
-struct ColorRGB <: AbstractColor
+"24-bit RGB color"
+struct ColorRGB <: TermColor
     r::UInt8
     g::UInt8
     b::UInt8
 end
 
-ColorRGB(c::UInt32) = ColorRGB(c >> 16, (c & 0xff00) >> 8, c & 0xff) # 1 UInt32 into 3 UInt8
+ColorRGB(x::UInt32) = ColorRGB((x >> 16, x >> 8, x) .& 0xff...)
+UInt32(c::ColorRGB) = (x = UInt32[c...]; x[1] << 16 + x[2] << 8 + x[3])
 
-# ColorRGB(r::N, g::N, b::N) where {N<:Integer} = ColorRGB(UInt8.((r, g, b))...) # throws InexactError
-# ColorRGB(c::N) where {N<:Integer} = ColorRGB(UInt32(c)) # throws InexactError
+ColorRGB(r::N, g::N, b::N) where {N<:Integer} = ColorRGB(UInt8[r, g, b]...)
+ColorRGB(n::N) where {N<:Integer} = ColorRGB(UInt32(n))
 
-# generic struct iteration (for splats)
-Base.iterate(c::ColorRGB, state = 0) = state < nfields(c) ? (Base.getfield(c, state+1), state+1) : nothing
+Color256(n::N) where {N<:Integer} = Color256(UInt8(n))
+
+# For splats
+iterate(c::ColorRGB, state = 0) = state < nfields(c) ? (getfield(c, state+1), state+1) : nothing
+
+# String (plain) representation
+print(io::IO, c::ColorRGB) = print(io, "#" * string(UInt32(c); base=16, pad=6))
+
+# Constructor-like representation
+show(io::IO, c::ColorRGB) = print(io, "rgb\"$(string(c))\"")
 
 
-### IO
+_colorize_ansi(s, c::Color256) = "\033[38;5;$(c.v)m$s\033[0m"
+_colorize_ansi(s, c::ColorRGB) = "\033[38;2;$(c.r);$(c.g);$(c.b)m$s\033[0m"
+
+function show(io::IO, ::MIME"text/plain", c::Color256)
+    if get(io, :color, false)
+        print(io, _colorize_ansi("██ ", c) * string(c.v))
+    else
+        show(io, c)
+    end
+end
+
+function show(io::IO, ::MIME"text/plain", c::ColorRGB)
+    if get(io, :color, false)
+        print(io, _colorize_ansi("██ ", c) * string(c))
+    else
+        show(io, c)
+    end
+end
+
+# TODO: MIME HTML
 
 """
     parse(::Type{ColorRGB}, str)
 
 Parse a hex triplet as a ColorRGB. The string must start with a '#' character,
-and it must have exactly 6 digits.
+and it must have exactly 6 hexadecimal digits.
 """
-function Base.parse(::Type{ColorRGB}, str)
-    l = length(str)
-    str[1] != Char(0x23) && throw(ArgumentError("hex color string must start with a '#'"))
-    l != 7 && throw(ArgumentError("hex color string is not the right size. Got $l expected 7"))
+function parse(::Type{ColorRGB}, str::AbstractString)
+    if length(str) != 7 || str[1] != '#'
+        throw(ArgumentError("hex color string must start with '#', and have exactly 6 hex digits."))
+    end
     ColorRGB(parse(UInt32, str[2:end]; base=16))
 end
 
-macro rgb_str(s)
-    Base.parse(ColorRGB, s)
+"Shorthand for parse(ColorRGB, str)"
+macro rgb_str(str::AbstractString)
+    parse(ColorRGB, str)
 end
-
-_ansi_style(s::AbstractString, c::ColorRGB) = "\033[38;2;$(c.r);$(c.g);$(c.b)m$s\033[0m"
-_ansi_style(s::AbstractString, c::Color256) = "\033[38;5;$(c.v)m$s\033[0m"
-
-# TODO:  show/print/display? MIME types?
-Base.show(io::IO, ::MIME"text/plain", c::AbstractColor) = print(io, _ansi_style("███", c))
 
 
 ### Color quantization
@@ -72,50 +100,48 @@ function generate_xterm_colors()::Vector{ColorRGB}
 end
 
 function _fill_16_colors!(colors)
-    i = 1
-    for factor in [true, false]
+    i = 0
+    for factor in [1, 0]
         💡 = [false, true]
         for b in 💡, g in 💡, r in 💡
-            colors[i] = ColorRGB(
+            colors[i+=1] = ColorRGB(
                 r ? (255 >>> factor) + factor : 0,
                 g ? (255 >>> factor) + factor : 0,
                 b ? (255 >>> factor) + factor : 0
             )
-            i += 1
         end
     end
 
     colors[9] = colors[8]
-    colors[8] = ColorRGB(([colors[8]...] .+ 64)...)
+    colors[8] = ColorRGB([colors[8]...] .+ 64 ...)
     return
 end
 
 function _fill_color_cube!(colors)
-    i = 17
-    for r in 0:5, g in 0:5, b in 0:5
-        colors[i] = ColorRGB(
+    i = 16
+    💡 = 1:5
+    for r in 💡, g in 💡, b in 💡
+        colors[i+=1] = ColorRGB(
             r == 0 ? 0 : r * 40 + 55,
             g == 0 ? 0 : g * 40 + 55,
             b == 0 ? 0 : b * 40 + 55
         )
-        i += 1
     end
 end
 
 function _fill_gray_ramp!(colors)
-    # Generate gray-scale colors
-    i = 17 + 216
-    for gray in 0:23
+    colors[233:256] = map(0:23) do gray
         val = gray * 10 + 8
-        colors[i] = ColorRGB(val, val, val)
-        i += 1
+        ColorRGB(val, val, val)
     end
 end
 
-# An eclidean metric probably isn't the best way to compare colors, but whatever
-_dist(p::ColorRGB, q::ColorRGB) = √sum((Float64.((p...,)) .- Float64.((q...,))) .^ 2.0)
+# TODO: Use Hsluv.Rgb here instead
+_dist(p::ColorRGB, q::ColorRGB) = √sum((Float64[p...] .- Float64[q...]) .^ 2.0)
 
-function quantize(color::ColorRGB, palette::Vector{ColorRGB})
+const XTERM_COLORS = generate_xterm_colors()
+
+function quantize(color::ColorRGB, palette::Vector{ColorRGB}=XTERM_COLORS)
     m = Inf
     c = color
     idx = 1
@@ -130,27 +156,4 @@ function quantize(color::ColorRGB, palette::Vector{ColorRGB})
     return c, idx
 end
 
-function quantize(colors::Vector{ColorRGB}, palette::Vector{ColorRGB})
-    # map(quantize, colors, palette)
-    l = length(colors)
-    new_colors = Vector(undef, l)
-    for i in 1:l
-        new_colors[i] = quantize(colors[i], palette)
-    end
-    return new_colors
-end
-
-const XTERM_COLORS = generate_xterm_colors()
-
-quantize(color::ColorRGB) = quantize(color, XTERM_COLORS)
-quantize(colors::Vector{ColorRGB}) = quantize(colors, XTERM_COLORS)
-
-# Check if a terminal emulator has true color support
-# and if it uses the same algorithm to produce 256 colors as xterm
-function check_term_colors()
-    for i in 0:255
-        println(i, Color256(i), XTERM_COLORS[i+1])
-    end
-end
-
-end # module
+# end # module

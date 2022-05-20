@@ -5,7 +5,7 @@ A small package with color utilities:
 - IO helper functions
 - simple color quantization
 
-⚠️ This package was written for personal use.
+⚠️ **This package was written for personal use.**
 You might find more complete packages for color manipulation on the
 [JuliaGraphics](https://github.com/JuliaGraphics) repositories.
 
