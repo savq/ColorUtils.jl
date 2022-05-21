@@ -3,9 +3,12 @@ HSLuv conversion utilities.
 
 See the HSLuv reference implementation for details: https://github.com/hsluv/hsluv
 """
-# module HsluvColors
+module HsluvColors
 
-import Base: parse, iterate # TODO: move to main file
+import Base: iterate, print, parse
+import ..ColorRGB
+
+export AbstractColor
 
 export Rgb
 export Hsluv
@@ -15,17 +18,16 @@ export Lch
 export Luv
 export Xyz
 
-export print
-export parse
+export hex
 
-# module Geometry # Line and related functions are in a separate file in the reference implementation.
+# Line and related functions are in a separate file in the reference implementation.
 Base.@kwdef struct Line{N<:Number}
     slope::N
     intercept::N
 end
+
 _distance_from_origin(l::Line) = abs(l.intercept) / sqrt((l.slope ^ 2) + 1)
 _length_of_ray_until_intersect(θ, l::Line) = l.intercept / (sin(θ) - l.slope * cos(θ))
-# end # Geometry
 
 
 abstract type AbstractColor end
@@ -44,19 +46,13 @@ struct Rgb <: AbstractColor
     # end
 end
 
-struct Xyz <: AbstractColor
-    x::Float64
-    y::Float64
-    z::Float64
-end
-
-struct Luv <: AbstractColor
-    l::Float64
-    u::Float64
-    v::Float64
-end
-
 struct Hsluv <: AbstractColor
+    h::Float64
+    s::Float64
+    l::Float64
+end
+
+struct Hpluv <: AbstractColor
     h::Float64
     s::Float64
     l::Float64
@@ -68,10 +64,16 @@ struct Lch <: AbstractColor
     h::Float64
 end
 
-struct Hpluv <: AbstractColor
-    h::Float64
-    s::Float64
+struct Luv <: AbstractColor
     l::Float64
+    u::Float64
+    v::Float64
+end
+
+struct Xyz <: AbstractColor
+    x::Float64
+    y::Float64
+    z::Float64
 end
 
 # For splats
@@ -301,30 +303,17 @@ Rgb(color::Hpluv) = color |> Lch |> Rgb
 Hpluv(color::Rgb) = color |> Lch |> Hpluv
 
 
-### Hex color strings
+# Implement hex color strings via ColorUtils.ColorRGB
 
-function Core.UInt32(color::Rgb)
-    x = round.(UInt32, [color...] * 255)
-    (x[1] << 16) + (x[2] << 8) + x[3]
-end
+Rgb(c::ColorRGB) = Rgb(Float64[c...] ./ 255 ...)
+ColorRGB(color::Rgb) = ColorRGB(round.(UInt32, [color...] * 255)...)
+ColorRGB(color::AbstractColor) = color |> Rgb |> ColorRGB
 
-function Rgb(x::UInt32)
-    Rgb([x >> 16, x >> 8, x] .& 0xff ./ 255 ...)
-end
+print(io::IO, color::Rgb) = print(io, ColorRGB(color))
 
-function Base.print(io::IO, color::Rgb)
-    print(io, "#" * string(UInt32(color); base=16, pad=6))
-end
+parse(::Type{Rgb}, str) = Rgb(parse(ColorRGB, str))
 
-function Base.parse(::Type{Rgb}, str)
-    if (l = length(str)) != 7 || str[1] != '#'
-        throw(ArgumentError("hex color string must begin with a '#', followed by 6 hexadecimal digits"))
-    end
-    Rgb(parse(UInt32, str[2:end]; base = 16))
-end
-
-hex(color::Rgb) = string(color) # string is automatically defined after print
-
+hex(color::Rgb) = string(ColorRGB(color)) # string is automatically defined after print
 hex(color::AbstractColor) = color |> Rgb |> hex
 
-# end #module
+end #module

@@ -1,7 +1,9 @@
-include("../src/HSLuv.jl")
+include("../src/ColorUtils.jl")
+using .ColorUtils
+using .ColorUtils.HsluvColors
+
 include("./fetch.jl")
 
-# using .HsluvColors
 using Test
 
 const MAXDIFF = 0.0000000001
@@ -42,5 +44,5 @@ end
     @test x.hex == hex(x.rgb)
     @test x.hex == hex(x.hsluv)
     @test x.hex == hex(x.hpluv)
- end
+end
 
