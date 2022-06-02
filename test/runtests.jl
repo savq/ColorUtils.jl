@@ -1,6 +1,5 @@
 include("../src/ColorUtils.jl")
 using .ColorUtils
-using .ColorUtils.HsluvColors
 
 include("./fetch.jl")
 
@@ -24,14 +23,14 @@ end
 
 @testset "Forward functions" for x in COLORS
     # forward functions
-    @test x.rgb   == parse(Rgb, x.hex)
+    @test x.rgb   == parse(Rgb{Float64}, x.hex)
     @test x.xyz   ≈ Xyz(x.rgb)
     @test x.luv   ≈ Luv(x.xyz)
     @test x.lch   ≈ Lch(x.luv)
     @test x.hsluv ≈ Hsluv(x.lch)
     @test x.hpluv ≈ Hpluv(x.lch)
-    @assert x.hsluv ≈ Hsluv(parse(Rgb, x.hex))
-    @assert x.hpluv ≈ Hpluv(parse(Rgb, x.hex))
+    @assert x.hsluv ≈ Hsluv(parse(Rgb{Float64}, x.hex))
+    @assert x.hpluv ≈ Hpluv(parse(Rgb{Float64}, x.hex))
 end
 
 @testset "Backward functions" for x in COLORS

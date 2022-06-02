@@ -1,37 +1,10 @@
-# module TermColors
-
-# TODO: Abstract super-type
-
-"8-bit color"
-struct Color256
-    v::UInt8
-end
-
-# TODO: Having two types `Rgb` and `ColorRGB` is confusing. think of a better name
-"24-bit RGB color"
-struct ColorRGB
-    r::UInt8
-    g::UInt8
-    b::UInt8
-end
-
-ColorRGB(x::UInt32) = ColorRGB((x >> 16, x >> 8, x) .& 0xff...)
-UInt32(c::ColorRGB) = (x = UInt32[c...]; x[1] << 16 + x[2] << 8 + x[3])
-
-ColorRGB(r::N, g::N, b::N) where {N<:Integer} = ColorRGB(UInt8[r, g, b]...)
-ColorRGB(n::N) where {N<:Integer} = ColorRGB(UInt32(n))
-
-Color256(n::N) where {N<:Integer} = Color256(UInt8(n))
-
-# For splats
-iterate(c::ColorRGB, state = 0) = state < nfields(c) ? (getfield(c, state+1), state+1) : nothing
+const ColorRGB = Rgb{UInt8} # FIXME: Remove
 
 # String (plain) representation
 print(io::IO, c::ColorRGB) = print(io, "#" * string(UInt32(c); base=16, pad=6))
 
 # Constructor-like representation
 show(io::IO, c::ColorRGB) = print(io, "rgb\"$(string(c))\"")
-
 
 _colorize_ansi(s, c::Color256) = "\033[38;5;$(c.v)m$s\033[0m"
 _colorize_ansi(s, c::ColorRGB) = "\033[38;2;$(c.r);$(c.g);$(c.b)m$s\033[0m"
@@ -145,5 +118,3 @@ function quantize(color::ColorRGB, palette::Vector{ColorRGB}=XTERM_COLORS)
     end
     return c, idx
 end
-
-# end

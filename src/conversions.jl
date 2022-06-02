@@ -1,86 +1,3 @@
-"""
-HSLuv conversion utilities.
-
-See the HSLuv reference implementation for details: https://github.com/hsluv/hsluv
-"""
-module HsluvColors
-
-import Base: iterate, print, parse
-import ..ColorRGB
-
-export AbstractColor
-
-export Rgb
-export Hsluv
-export Hpluv
-
-export Lch
-export Luv
-export Xyz
-
-export hex
-
-# Line and related functions are in a separate file in the reference implementation.
-Base.@kwdef struct Line{N<:Number}
-    slope::N
-    intercept::N
-end
-
-_distance_from_origin(l::Line) = abs(l.intercept) / sqrt((l.slope ^ 2) + 1)
-_length_of_ray_until_intersect(θ, l::Line) = l.intercept / (sin(θ) - l.slope * cos(θ))
-
-
-abstract type AbstractColor end
-
-struct Rgb <: AbstractColor
-    r::Float64
-    g::Float64
-    b::Float64
-    # function Rgb(r, g, b) # FIXME: Test fail when this check is called???
-    #     I = 0.0:1.0
-    #     if !(r in I && g in I && b in I)
-    #         throw(DomainError((r, g, b), "Rgb values must be in range 0.0:1.0"))
-    #     else
-    #         new(r, g, b)
-    #     end
-    # end
-end
-
-struct Hsluv <: AbstractColor
-    h::Float64
-    s::Float64
-    l::Float64
-end
-
-struct Hpluv <: AbstractColor
-    h::Float64
-    s::Float64
-    l::Float64
-end
-
-struct Lch <: AbstractColor
-    l::Float64
-    c::Float64
-    h::Float64
-end
-
-struct Luv <: AbstractColor
-    l::Float64
-    u::Float64
-    v::Float64
-end
-
-struct Xyz <: AbstractColor
-    x::Float64
-    y::Float64
-    z::Float64
-end
-
-# For splats
-function Base.iterate(c::AbstractColor, state = 0)
-    state < nfields(c) ? (Base.getfield(c, state + 1), state + 1) : nothing
-end
-
 const M = [
     3.2409699419045214    -1.5373831775700935  -0.49861076029300328
     -0.96924363628087983   1.8759675015077207   0.041555057407175613
@@ -166,11 +83,11 @@ function _to_linear(c)
     end
 end
 
-function Rgb(color::Xyz)
-    Rgb(_from_linear.(M * [color...])...)
+function Rgb{Float64}(color::Xyz)
+    Rgb{Float64}(_from_linear.(M * [color...])...)
 end
 
-function Xyz(color::Rgb)
+function Xyz(color::Rgb{Float64})
     rgbl = _to_linear.([color...])
     Xyz((MINV * rgbl)...)
 end
@@ -293,27 +210,40 @@ function Hpluv(color::Lch)
     end
 end
 
-Rgb(color::Lch) = color |> Luv |> Xyz |> Rgb
-Lch(color::Rgb) = color |> Xyz |> Luv |> Lch
+Rgb{Float64}(color::Lch) = color |> Luv |> Xyz |> Rgb{Float64}
+Lch(color::Rgb{Float64}) = color |> Xyz |> Luv |> Lch
 
-Rgb(color::Hsluv) = color |> Lch |> Rgb
-Hsluv(color::Rgb) = color |> Lch |> Hsluv
+Rgb{Float64}(color::Hsluv) = color |> Lch |> Rgb{Float64}
+Hsluv(color::Rgb{Float64}) = color |> Lch |> Hsluv
 
-Rgb(color::Hpluv) = color |> Lch |> Rgb
-Hpluv(color::Rgb) = color |> Lch |> Hpluv
+Rgb{Float64}(color::Hpluv) = color |> Lch |> Rgb{Float64}
+Hpluv(color::Rgb{Float64}) = color |> Lch |> Hpluv
+
+Rgb{Float64}(color::Rgb{UInt8}) = Rgb{Float64}([color...] ./ 255 ...)
+Rgb{UInt8}(color::Rgb{Float64}) = Rgb{UInt8}(round.(UInt32, [color...] * 255)...)
+
+Rgb{UInt8}(color::AbstractColor) = color |> Rgb{Float64} |> Rgb{UInt8}
+Rgb{UInt8}(color::Rgb{UInt8}) = color
+
+# FIXME: Do this without metaprogramming
+for T in [:Hsluv, :Hpluv, :Lch, :Luv, :Xyz]
+    @eval($T(color::Rgb{UInt8}) = color |> Rgb{Float64} |> $T)
+end
+
+Rgb(color::AbstractColor) = color |> Rgb{Float64}
+Rgb(color::Rgb) = color
 
 
-# Implement hex color strings via ColorUtils.ColorRGB
+# Rgb{UInt8} <--> UInt32 (for IO)
+Rgb{UInt8}(x::UInt32) = Rgb{UInt8}((x >> 16, x >> 8, x) .& 0xff...)
+UInt32(c::Rgb{UInt8}) = (x = UInt32[c...]; x[1] << 16 + x[2] << 8 + x[3])
 
-Rgb(c::ColorRGB) = Rgb(Float64[c...] ./ 255 ...)
-ColorRGB(color::Rgb) = ColorRGB(round.(UInt32, [color...] * 255)...)
-ColorRGB(color::AbstractColor) = color |> Rgb |> ColorRGB
 
-print(io::IO, color::Rgb) = print(io, ColorRGB(color))
+# TODO: move this to an IO file
 
-parse(::Type{Rgb}, str) = Rgb(parse(ColorRGB, str))
+print(io::IO, color::Rgb{Float64}) = print(io, Color{UInt8}(color))
 
-hex(color::Rgb) = string(ColorRGB(color)) # string is automatically defined after print
-hex(color::AbstractColor) = color |> Rgb |> hex
+parse(::Type{Rgb{Float64}}, str) = Rgb{Float64}(parse(Rgb{UInt8}, str))
 
-end #module
+hex(color::AbstractColor) = color |> Rgb{UInt8} |> string
+

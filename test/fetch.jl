@@ -5,8 +5,8 @@ import JSON3
 "URL for the JSON snapshot of the color space generated from the reference implementation."
 const URL = "https://raw.githubusercontent.com/hsluv/hsluv/master/snapshots/snapshot-rev4.json"
 
-function fetch_data(url, path)
-    run(pipeline(`curl $url`, stdout=path))
+function fetch_data(path)
+    run(pipeline(`curl $URL`, stdout=path))
 end
 
 function read_data(path)
@@ -32,7 +32,7 @@ end
 
 function get_data()
     path = @__DIR__() * "/snapshot-rev4.json"
-    !isfile(path) && fetch_data(url, path)
+    !isfile(path) && fetch_data(path)
     path |> read_data |> clean_data
 end
 
