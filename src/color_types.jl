@@ -6,6 +6,8 @@ struct Rgb{N <: Union{Float64, UInt8}} <: AbstractColor
     b::N
 end
 
+const URgb = Rgb{UInt8}
+
 struct Hsluv <: AbstractColor
     h::Float64
     s::Float64

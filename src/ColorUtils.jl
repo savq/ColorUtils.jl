@@ -21,8 +21,10 @@ export Xyz
 
 export Color256
 
-include("./TermColors.jl")
+include("./io.jl")
 export @rgb_str
+
+include("./quantization.jl")
 export quantize
 
 include("./geometry.jl")         # Line helper functions

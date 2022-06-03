@@ -238,12 +238,3 @@ Rgb(color::Rgb) = color
 Rgb{UInt8}(x::UInt32) = Rgb{UInt8}((x >> 16, x >> 8, x) .& 0xff...)
 UInt32(c::Rgb{UInt8}) = (x = UInt32[c...]; x[1] << 16 + x[2] << 8 + x[3])
 
-
-# TODO: move this to an IO file
-
-print(io::IO, color::Rgb{Float64}) = print(io, Color{UInt8}(color))
-
-parse(::Type{Rgb{Float64}}, str) = Rgb{Float64}(parse(Rgb{UInt8}, str))
-
-hex(color::AbstractColor) = color |> Rgb{UInt8} |> string
-
