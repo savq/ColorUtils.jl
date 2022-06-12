@@ -49,22 +49,10 @@ function _fill_gray_ramp!(colors)
     return
 end
 
-# TODO: Use Hsluv.Rgb here instead
 _dist(p::URgb, q::URgb) = √sum((Float64[p...] .- Float64[q...]) .^ 2.0)
+_dist(p::URgb) = Base.Fix2(_dist, p)
 
 const XTERM_COLORS = generate_xterm_colors()
 
-function quantize(color::URgb, palette::Vector{URgb}=XTERM_COLORS)
-    m = Inf
-    c = color
-    idx = 1
-    for (i, p) in enumerate(palette)
-        newmin = min(m, _dist(color, p))
-        if newmin != m
-            m = newmin
-            c = p
-            idx = i
-        end
-    end
-    return c, idx
-end
+quantize(color::URgb, palette::Vector{URgb}=XTERM_COLORS) = argmin(_dist(color), palette)
+
