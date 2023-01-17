@@ -13,13 +13,13 @@ end
 
 function _fill_16_colors!(colors)
     i = 0
+    💡 = false:true
     for factor in [1, 0]
-        💡 = [false, true]
         for b in 💡, g in 💡, r in 💡
             colors[i+=1] = URgb(
-                r ? (255 >>> factor) + factor : 0,
-                g ? (255 >>> factor) + factor : 0,
-                b ? (255 >>> factor) + factor : 0
+                r && 255 >>> factor + factor,
+                g && 255 >>> factor + factor,
+                b && 255 >>> factor + factor,
             )
         end
     end
@@ -34,9 +34,9 @@ function _fill_color_cube!(colors)
     💡 = 1:5
     for r in 💡, g in 💡, b in 💡
         colors[i+=1] = URgb(
-            r == 0 ? 0 : r * 40 + 55,
-            g == 0 ? 0 : g * 40 + 55,
-            b == 0 ? 0 : b * 40 + 55
+            r != 0 && r * 40 + 55,
+            g != 0 && g * 40 + 55,
+            b != 0 && b * 40 + 55,
         )
     end
 end

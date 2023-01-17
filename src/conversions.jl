@@ -94,9 +94,7 @@ end
 
 # NOTE: The reference implementation defines `yToL`/`lToY` here. Inlined instead
 
-function Luv(color::Xyz)
-    (; x, y, z) = color
-
+function Luv((; x, y, z)::Xyz)
     l = y <= EPSILON ? (y * KAPPA) : 116 * y^(1.0 / 3.0) - 16
 
     if l == 0
@@ -114,9 +112,7 @@ function Luv(color::Xyz)
     end
 end
 
-function Xyz(color::Luv)
-    (; l, u, v) = color
-
+function Xyz((; l, u, v)::Luv)
     if l == 0
         Xyz(0, 0, 0)
     else
@@ -133,8 +129,7 @@ function Xyz(color::Luv)
     end
 end
 
-function Lch(color::Luv)
-    (; l, u, v) = color
+function Lch((; l, u, v)::Luv)
     c = sqrt(u * u + v * v)
 
     # greys: disambiguate hue
@@ -148,8 +143,7 @@ function Lch(color::Luv)
     Lch(l, c, h)
 end
 
-function Luv(color::Lch)
-    (; l, c, h) = color
+function Luv((; l, c, h)::Lch)
     hrad = deg2rad(h)
     Luv(
         l,
@@ -158,9 +152,7 @@ function Luv(color::Lch)
     )
 end
 
-function Lch(color::Hsluv)
-    (; h, s, l) = color
-
+function Lch((; h, s, l)::Hsluv)
     # White and black: disambiguate chroma
     if l > 99.9999999
         Lch(100, 0, h)
@@ -172,9 +164,7 @@ function Lch(color::Hsluv)
     end
 end
 
-function Hsluv(color::Lch)
-    (; l, c, h) = color
-
+function Hsluv((; l, c, h)::Lch)
     # White and black: disambiguate chroma
     if l > 99.9999999
         Hsluv(h, 0, 100)
@@ -186,8 +176,7 @@ function Hsluv(color::Lch)
     end
 end
 
-function Lch(color::Hpluv)
-    (; h, s, l) = color
+function Lch((; h, s, l)::Hpluv)
     if l > 99.9999999
         Lch(100, 0, h)
     elseif l < 0.00000001
@@ -198,8 +187,7 @@ function Lch(color::Hpluv)
     end
 end
 
-function Hpluv(color::Lch)
-    (; l, c, h) = color
+function Hpluv((; l, c, h)::Lch)
     if l > 99.9999999
         Hpluv(h, 0, 100)
     elseif l < 0.00000001
