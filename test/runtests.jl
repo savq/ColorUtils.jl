@@ -38,7 +38,7 @@ end
     @test x.lch ≈ Lch(x.hpluv)
     @test x.luv ≈ Luv(x.lch)
     @test x.xyz ≈ Xyz(x.luv)
-    @test x.rgb ≈ Rgb(x.xyz)
+    @test x.rgb ≈ Rgb{Float64}(x.xyz)
 
     @test x.hex == hex(x.rgb)
     @test x.hex == hex(x.hsluv)

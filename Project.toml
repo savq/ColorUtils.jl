@@ -3,9 +3,12 @@ uuid = "e7ad76ee-1682-4ca9-9390-52e61ddf3d41"
 authors = ["Sergio Alejandro Vargas <savargasqu+git@unal.edu.co>"]
 version = "0.2.0"
 
-[deps]
-JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+# [deps]
 
 [extras]
+JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+
+[targets]
+test = ["Test", "JSON3"]

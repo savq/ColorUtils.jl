@@ -23,7 +23,7 @@ function clean_data(json)
             hsluv = Hsluv(v[:hsluv]...),
             lch   = Lch(v[:lch]...),
             luv   = Luv(v[:luv]...),
-            rgb   = Rgb(v[:rgb]...),
+            rgb   = Rgb{Float64}(v[:rgb]...),
             xyz   = Xyz(v[:xyz]...),
         )
     end
