@@ -24,11 +24,9 @@ export Color256
 include("./io.jl")
 export @rgb_str
 
-include("./quantization.jl")
-export quantize
+include("./color8bit.jl")
 
-include("./geometry.jl")         # Line helper functions
-
+include("./geometry.jl")
 include("./conversions.jl")
 export hex
 

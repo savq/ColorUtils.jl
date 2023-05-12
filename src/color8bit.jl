@@ -49,10 +49,5 @@ function _fill_gray_ramp!(colors)
     return
 end
 
-_dist(p::URgb, q::URgb) = √sum((Float64[p...] .- Float64[q...]) .^ 2.0)
-_dist(p::URgb) = Base.Fix2(_dist, p)
-
 const XTERM_COLORS = generate_xterm_colors()
-
-quantize(color::URgb, palette::Vector{URgb}=XTERM_COLORS) = argmin(_dist(color), palette)
 

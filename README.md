@@ -3,7 +3,6 @@ A small package with color utilities:
 - Color types and conversion functions
 - An implementation of [HSLuv](https://github.com/hsluv/hsluv) (rev4)
 - IO helper functions
-- simple color quantization
 
 ⚠️ **This package was written for personal use.**
 You might find more complete packages for color manipulation on the
