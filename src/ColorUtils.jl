@@ -30,4 +30,7 @@ include("./geometry.jl")
 include("./conversions.jl")
 export hex
 
+include("./okcolor.jl")
+export OkColor
+
 end # module
