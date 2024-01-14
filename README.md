@@ -1,6 +1,6 @@
-A small package with color utilities:
+A small package with color utilities, including:
 
-- Color types and conversion functions
+- An implementation of [Oklab](https://bottosson.github.io/posts/oklab/) and [Okhsl](https://bottosson.github.io/posts/colorpicker/)
 - An implementation of [HSLuv](https://github.com/hsluv/hsluv) (rev4)
 - IO helper functions
 
@@ -16,4 +16,3 @@ you can add it to your Julia environment using its URL:
 using Pkg
 Pkg.add(url="https://github.com/savq/ColorUtils.jl")
 ```
-
