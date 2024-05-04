@@ -5,8 +5,8 @@ for details: https://github.com/hsluv/hsluv
 """
 module ColorUtils
 
-import Core: UInt32
-import Base: iterate, print, show, parse
+using Core: UInt32
+using Base: iterate, print, show, parse
 
 include("./color_types.jl")     # struct definitions
 export AbstractColor
