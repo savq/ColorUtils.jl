@@ -11,7 +11,7 @@ You might find more complete packages for color manipulation on the
 ## Installation
 
 This package isn't listed in the Julia General Registry,
-you can add it to your Julia environment using it's URL:
+you can add it to your Julia environment using its URL:
 ```julia
 using Pkg
 Pkg.add(url="https://github.com/savq/ColorUtils.jl")
