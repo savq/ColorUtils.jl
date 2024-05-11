@@ -1,5 +1,5 @@
 include("../src/ColorUtils.jl")
-using .ColorUtils
+using .ColorUtils: AbstractColor, Rgb, Xyz, Luv, Lch, Hsluv, Hpluv, hex
 
 include("./fetch.jl")
 
