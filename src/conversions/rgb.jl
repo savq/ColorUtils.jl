@@ -3,18 +3,31 @@ Convertions between RGB and XYZ color spaces.
 """
 module RGBColors
 
+using ..ColorUtils: AbstractColor
+
 """
     RGB(r, g, b)
 
-Create an RGB color from values in range \$[0, 1]\$.
+Create an RGB color from red, green, and blue values in range \$[0, 1]\$.
 """
-struct RGB
+struct RGB <: AbstractColor
     r::Float64
     g::Float64
     b::Float64
 end
 
-struct XYZ
+"""
+    RGB24(r, g, b)
+
+Create an RGB24 color from red, green, and blue values in range \$[0, 255]\$.
+"""
+struct RGB24 <: AbstractColor
+    r::UInt8
+    g::UInt8
+    b::UInt8
+end
+
+struct XYZ <: AbstractColor
     x::Float64
     y::Float64
     z::Float64
@@ -55,5 +68,12 @@ function XYZ((; r, g, b)::RGB)
     rgbl = to_linear.([r, g, b])
     return XYZ((XYZ_from_RGB * rgbl)...)
 end
+
+RGB((; r, g, b)::RGB24) = RGB([r, g, b] ./ 255 ...)
+RGB24((; r, g, b)::RGB) = RGB24(round.(UInt8, [r, g, b] * 255)...)
+
+RGB24(color::AbstractColor) = color |> RGB |> RGB24
+
+RGB24(x::UInt32) = RGB24((x >> 16, x >> 8, x) .& 0xff...)
 
 end # module

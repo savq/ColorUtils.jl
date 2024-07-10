@@ -3,6 +3,7 @@ Convertions between Okhsl and Oklab color spaces.
 """
 module OkhslColors
 
+using ..ColorUtils: AbstractColor
 using ..OklabColors: Oklab, XYZ_from_LMS, LMS_from_Lab
 using ..RGBColors: RGB, XYZ, RGB_from_XYZ
 
@@ -11,7 +12,7 @@ using ..RGBColors: RGB, XYZ, RGB_from_XYZ
 
 Create an Okhsl color.
 """
-struct Okhsl
+struct Okhsl <: AbstractColor
     "`Okhsl.h` is the hue in range \$[0, 360]\$"
     h::Float64
     "`Okhsl.s` is the saturation in range \$[0, 100]\$"
@@ -312,5 +313,7 @@ end
 
 Okhsl(rgb::RGB) = rgb |> Oklab |> Okhsl
 RGB(hsl::Okhsl) = hsl |> Oklab |> RGB
+
+Okhsl(color::AbstractColor) = color |> RGB |> Okhsl
 
 end # module

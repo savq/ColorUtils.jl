@@ -23,8 +23,8 @@ function clean_data(json)
             hsluv = Hsluv(v[:hsluv]...),
             lch   = Lch(v[:lch]...),
             luv   = Luv(v[:luv]...),
-            rgb   = Rgb{Float64}(v[:rgb]...),
-            xyz   = Xyz(v[:xyz]...),
+            rgb   = RGB(v[:rgb]...),
+            xyz   = XYZ(v[:xyz]...),
         )
     end
     vec

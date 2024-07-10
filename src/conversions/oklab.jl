@@ -3,6 +3,7 @@ Convertions between Oklab and XYZ color spaces.
 """
 module OklabColors
 
+using ..ColorUtils: AbstractColor
 using ..RGBColors: RGB, XYZ
 
 """
@@ -10,7 +11,7 @@ using ..RGBColors: RGB, XYZ
 
 Create an Oklab color.
 """
-struct Oklab
+struct Oklab <: AbstractColor
     "`Oklab.L` is the perceived lightness, in range \$[0, 1]\$."
     L::Float64
     "`Oklab.a` is the distance along the green/red axis, in range \$[-0.4, 0.4]\$."
