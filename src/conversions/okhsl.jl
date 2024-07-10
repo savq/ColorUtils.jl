@@ -1,77 +1,47 @@
 """
-An implementation of the OKLab and Okhsl color spaces.
+Convertions between Okhsl and Oklab color spaces.
 """
-module OkColor
+module OkhslColors
 
-export
-    srgb_to_okhsl,
-    okhsl_to_srgb,
-    oklab_to_linear_srgb,
-    linear_srgb_to_oklab
+using ..OklabColors: Oklab, XYZ_from_LMS, LMS_from_Lab
+using ..RGBColors: RGB, XYZ, RGB_from_XYZ
 
+"""
+    Okhsl(h, s, l)
 
-function srgb_transfer_function(a)
-    return a <= 0.0031308 ? (12.92 * a) : (1.055 * a ^ (1.0 / 2.4) - 0.055)
+Create an Okhsl color.
+"""
+struct Okhsl
+    "`Okhsl.h` is the hue in range \$[0, 360]\$"
+    h::Float64
+    "`Okhsl.s` is the saturation in range \$[0, 100]\$"
+    s::Float64
+    "`Okhsl.l` is the lightness in range \$[0, 100]\$"
+    l::Float64
 end
 
-function srgb_transfer_function_inv(a)
-    return a <= 0.04045 ? (a / 12.92) : (((a + 0.055) / 1.055) ^ 2.4)
-end
+# TODO: REMOVE?
+const RGB_from_LMS = RGB_from_XYZ * XYZ_from_LMS
 
-## https://bottosson.github.io/posts/oklab/#converting-from-linear-srgb-to-oklab
-## Skip intermediate conversion to XYZ
-const srgb_to_lms = [
-    0.4122214708    0.5363325363    0.0514459929
-    0.2119034982    0.6806995451    0.1073969566
-    0.0883024619    0.2817188376    0.6299787005
-]
 
-const lms_to_srgb = [
-    +4.0767416621    -3.3077115913    +0.2309699292
-    -1.2684380046    +2.6097574011    -0.3413193965
-    -0.0041960863    -0.7034186147    +1.7076147010
-]
+#= Lightness Estimate =#
 
-const lms_to_Lab = [
-    0.2104542553    +0.7936177850    -0.0040720468
-    1.9779984951    -2.4285922050    +0.4505937099
-    0.0259040371    +0.7827717662    -0.8086757660
-]
+const K1 = 0.206
+const K2 = 0.03
+const K3 = (1.0 + K1) / (1.0 + K2)
 
-const Lab_to_lms = [
-    1.0    +0.3963377774    +0.2158037573
-    1.0    -0.1055613458    -0.0638541728
-    1.0    -0.0894841775    -1.2914855480
-]
-
-function linear_srgb_to_oklab((; r, g, b))
-    lms′ = cbrt.(srgb_to_lms * [r, g, b])
-    (L, a, b) = lms_to_Lab * lms′
-    return (; L, a, b)
-end
-
-function oklab_to_linear_srgb((; L, a, b))
-    lms = (Lab_to_lms * [L, a, b]) .^ 3
-    (r, g, b) = lms_to_srgb * lms
-    return (; r, g, b)
-end
-
-## https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab
 function toe(L)
-    k1 = 0.206
-    k2 = 0.03
-    k3 = (1 + k1) / (1 + k2)
-    Lr = 0.5 * (k3 * L - k1 + sqrt(((k3 * L - k1) ^ 2) + (4 * k2 * k3 * L)))
+    Lr = 0.5 * (K3 * L - K1 + sqrt(((K3 * L - K1) ^ 2) + (4 * K2 * K3 * L)))
     return Lr
 end
 
-function toeinv(Lr)
-    k1 = 0.206
-    k2 = 0.03
-    k3 = (1 + k1) / (1 + k2)
-    L = (Lr * (Lr + k1)) / (k3 * (Lr + k2))
+function toe_inv(Lr)
+    L = (Lr * (Lr + K1)) / (K3 * (Lr + K2))
     return L
 end
+
+
+#= sRGB Gamut Intersection =#
 
 ## Finds the maximum saturation possible for a given hue that fits in sRGB
 ## Saturation here is defined as S = C/L
@@ -83,15 +53,15 @@ function compute_max_saturation(a, b)
     if [-1.88170328, -0.80936493]' * [a, b] > 1
         # Red component
         k = [+1.19086277, +1.76576728, +0.59662641, +0.75515197, +0.56771245]
-        w_lms = lms_to_srgb[1, :]
+        w_lms = RGB_from_LMS[1, :]
     elseif [1.81444104, -1.19445276]' * [a, b] > 1
         # Green component
         k = [+0.73956515, -0.45954404, +0.08285427, +0.12541070, +0.14503204]
-        w_lms = lms_to_srgb[2, :]
+        w_lms = RGB_from_LMS[2, :]
     else
         # Blue component
         k = [+1.35733652, -0.00915799, -1.15130210, -0.50559606, +0.00692167]
-        w_lms = lms_to_srgb[3, :]
+        w_lms = RGB_from_LMS[3, :]
     end
 
     # Approximate max saturation using a polynomial
@@ -100,7 +70,7 @@ function compute_max_saturation(a, b)
     # Do one step Halley's method to get closer
     # this gives an error less than 10e6, except for some blue hues where the dS/dh is close to infinite
     # this should be sufficient for most applications, otherwise do two/three steps
-    k_lms = Lab_to_lms[:, 2:3] * [a, b]
+    k_lms = LMS_from_Lab[:, 2:3] * [a, b]
 
     lms_ = 1 .+ sat .* k_lms
     lms = lms_ .^ 3
@@ -123,8 +93,10 @@ function find_cusp(a, b)
     s_cusp = compute_max_saturation(a, b)
 
     # Convert to linear sRGB to find the first point where at least one of r, g or b >= 1
-    rgb_at_max = oklab_to_linear_srgb((L = 1, a = s_cusp * a, b = s_cusp * b))
-    l_cusp = cbrt(1 / maximum(rgb_at_max))
+    # NOTE(savq): We don't call RGB because that whould unlinearize the values.
+    (; x, y, z) = XYZ(Oklab(1, s_cusp * a, s_cusp * b))
+    rgb_linear = RGB_from_XYZ * [x, y, z]
+    l_cusp = cbrt(1 / maximum(rgb_linear))
     c_cusp = l_cusp * s_cusp
 
     return (l_cusp, c_cusp)
@@ -152,7 +124,7 @@ function find_gamut_intersection(a, b, l1, c1, l0, cusp=find_cusp(a, b))
         dl = l1 - l0
         dc = c1
 
-        k_lms = Lab_to_lms[:, 2:3] * [a, b]
+        k_lms = LMS_from_Lab[:, 2:3] * [a, b]
 
         lmsdt_ = dl .+ dc .* k_lms
 
@@ -170,16 +142,16 @@ function find_gamut_intersection(a, b, l1, c1, l0, cusp=find_cusp(a, b))
             w = hcat(lms, lmsdt, lmsdt2)
             u(x) = x[2] / (x[2] * x[2] - 0.5 * (x[1] - 1) * x[3])
 
-            r = lms_to_srgb[1, :]' * w
+            r = RGB_from_LMS[1, :]' * w
             ur = u(r)
             tr = -r[1] * ur
 
-            g = lms_to_srgb[2, :]' * w
+            g = RGB_from_LMS[2, :]' * w
             ug = u(g)
             tg = -g[1] * ug
 
-            b = lms_to_srgb[3, :]' * w
-            ug = u(b)
+            b = RGB_from_LMS[3, :]' * w
+            ub = u(b)
             tb = -b[1] * ub
 
             tr = (ur >= 0) ? tr : Inf
@@ -193,14 +165,17 @@ function find_gamut_intersection(a, b, l1, c1, l0, cusp=find_cusp(a, b))
     return t
 end
 
-function get_ST_max(a_, b_, cusp=find_cusp(a_, b_))
+
+#= Chroma values =#
+
+function to_ST(a_, b_, cusp=find_cusp(a_, b_))
     (l, c) = cusp
     return (c / l, c / (1 - l))
 end
 
-# Returns a smooth approximation of the location of the cusp
-# This polynomial was created by an optimization process
-# It has been designed so that S_mid < S_max and T_mid < T_max
+## Returns a smooth approximation of the location of the cusp
+## This polynomial was created by an optimization process
+## It has been designed so that S_mid < S_max and T_mid < T_max
 function get_ST_mid(a_, b_)
     s = 0.11516993 + 1 / (
         7.44778970 + 4.15901240 * b_ + a_ * (
@@ -228,7 +203,7 @@ function get_Cs(l, a_, b_)
 
     c_max = find_gamut_intersection(a_, b_, l, 1, l, cusp)
 
-    (s_max, t_max) = get_ST_max(a_, b_, cusp)
+    (s_max, t_max) = to_ST(a_, b_, cusp)
     (s_mid, t_mid) = get_ST_mid(a_, b_)
 
     # Scale factor to compensate for the curved part of gamut shape
@@ -253,13 +228,14 @@ function get_Cs(l, a_, b_)
     return (c_0, c_mid, c_max)
 end
 
-function okhsl_to_oklab((; h, s, l))
+
+#= Conversions =#
+
+function Oklab((; h, s, l)::Okhsl)
     (h, s, l) = (h / 360, s / 100, l / 100)
 
-    if l == 1
-        return (; r = 255, g = 255, b = 255)
-    elseif l == 0
-        return (; r = 0, g = 0, b = 0)
+    if l == 1.0 || l == 0.0
+        return Oklab(l, 0, 0)
     end
 
     L = toe_inv(l)
@@ -292,10 +268,10 @@ function okhsl_to_oklab((; h, s, l))
     a = c * a_
     b = c * b_
 
-    return (; L, a, b)
+    return Oklab(L, a, b)
 end
 
-function oklab_to_okhsl((; L, a, b))
+function Okhsl((; L, a, b)::Oklab)
     s = 0.0
     l = toe(L)
 
@@ -308,6 +284,7 @@ function oklab_to_okhsl((; L, a, b))
 
         (c_0, c_mid, c_max) = get_Cs(L, a_, b_)
 
+        # Inverse of the interpolation Oklab(::Okhsl)
         mid = 0.8
         mid_inv = 1.25
 
@@ -329,20 +306,11 @@ function oklab_to_okhsl((; L, a, b))
     end
 
     let (h, s, l) = round.((h * 360, s * 100, l * 100))
-        return (; h, s, l)
+        return Okhsl(h, s, l)
     end
 end
 
-function okhsl_to_srgb(hsl)
-    rgb = hsl |> okhsl_to_oklab |> oklab_to_linear_srgb
-    (r, g, b) = round.(srgb_transfer_function.([rgb...]) .* 255)
-    return (; r, g, b)
-end
-
-function srgb_to_okhsl(rgb)
-    (r, g, b) = srgb_transfer_function_inv.([rgb...] ./ 255)
-    hsl = (; r, g, b) |> linear_srgb_to_oklab |> oklab_to_okhsl
-    return hsl
-end
+Okhsl(rgb::RGB) = rgb |> Oklab |> Okhsl
+RGB(hsl::Okhsl) = hsl |> Oklab |> RGB
 
 end # module
