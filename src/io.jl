@@ -40,23 +40,31 @@ function Base.show(io::IO, m::MIME"text/plain", c::Color8)
     end
 end
 
-# TODO: hex triplets with only 3 hex digits.
 """
     parse(::Type{RGB24}, str)
 
-Parse a hex triplet as a RGB24. The string must start with a '#' character,
-and it must have exactly 6 hexadecimal digits.
+Parse a hex triplet as a RGB24. The string must start with a '#' character.
+and it must have either 3 or 6 hexadecimal digits.
 """
 function Base.parse(::Type{RGB24}, str::AbstractString)
-    if length(str) != 7 || str[1] != '#'
-        throw(ArgumentError("hex color string must start with '#', and have exactly 6 hex digits."))
+    l = length(str)
+    if (l != 7 && l != 4) || str[1] != '#'
+        throw(ArgumentError("Hex color string must start with '#', and have either 3 or 6 hex digits. Got: " * str))
     end
-    RGB24(parse(UInt32, str[2:end]; base=16))
+
+    sub = str[2:end]
+    if length(sub) == 3
+        sub = sub[1]^2 * sub[2]^2 * sub[3]^2
+    end
+
+    RGB24(parse(UInt32, sub; base=16))
 end
 
 "Shorthand for parse(RGB24, str)"
 macro rgb_str(str::AbstractString)
-    parse(RGB24, str)
+    quote
+        parse(RGB24, $str)
+    end
 end
 
 hex(color::AbstractColor) = string(RGB24(color))
