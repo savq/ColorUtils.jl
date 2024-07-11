@@ -1,7 +1,7 @@
 # TODO: Rename module
 module TermColors
 
-using ..ColorUtils: AbstractColor
+using ..ColorUtils: AbstractColor, XYZ
 using ..RGBColors: RGB24
 
 """
@@ -76,5 +76,10 @@ end
 const XTERM_COLORS = generate_xterm_colors()
 
 RGB24(color::Color8) = XTERM_COLORS[color.n]
+
+XYZ(color::Color8) = XYZ(RGB24(color))
+
+# It's not possible to create a Color8 from XYZ without quantization,
+# so we don't define `Color8(::AbstractColor)`.
 
 end # module

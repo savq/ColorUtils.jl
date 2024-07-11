@@ -3,8 +3,8 @@ An implementation of [HSLuv](https://github.com/hsluv/hsluv) (rev4).
 """
 module HsluvColors
 
-using ..ColorUtils: AbstractColor
-using ..RGBColors: RGB, XYZ, RGB_from_XYZ
+using ..ColorUtils: AbstractColor, XYZ
+using ..RGBColors: RGB_from_XYZ
 
 struct Hsluv <: AbstractColor
     h::Float64
@@ -192,16 +192,19 @@ function Hpluv((; l, c, h)::Lch)
     end
 end
 
-RGB(color::Lch) = color |> Luv |> XYZ |> RGB
-Lch(color::RGB) = color |> XYZ |> Luv |> Lch
+## Unlike the reference implementation, we don't define RGB convertions directly.
+## We define convertions up to XYZ, and let multiple dispatch do the rest.
 
-RGB(color::Hsluv) = color |> Lch |> RGB
-Hsluv(color::RGB) = color |> Lch |> Hsluv
+Lch(xyz::XYZ) = Lch(Luv(xyz))
+XYZ(lch::Lch) = XYZ(Luv(lch))
 
-RGB(color::Hpluv) = color |> Lch |> RGB
-Hpluv(color::RGB) = color |> Lch |> Hpluv
+Hsluv(xyz::XYZ) = Hsluv(Lch(xyz))
+XYZ(hsluv::Hsluv) = XYZ(Lch(hsluv))
 
-Hsluv(color::AbstractColor) = color |> RGB |> Hsluv
-Hpluv(color::AbstractColor) = color |> RGB |> Hpluv
+Hpluv(xyz::XYZ) = Hpluv(Lch(xyz))
+XYZ(hpluv::Hpluv) = XYZ(Lch(hpluv))
+
+Hsluv(color::AbstractColor) = Hsluv(XYZ(color))
+Hpluv(color::AbstractColor) = Hpluv(XYZ(color))
 
 end # module

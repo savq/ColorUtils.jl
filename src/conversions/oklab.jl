@@ -3,8 +3,7 @@ Convertions between Oklab and XYZ color spaces.
 """
 module OklabColors
 
-using ..ColorUtils: AbstractColor
-using ..RGBColors: RGB, XYZ
+using ..ColorUtils: AbstractColor, XYZ
 
 """
     Oklab(L, a, b)
@@ -58,19 +57,6 @@ function XYZ((; L, a, b)::Oklab)
     return XYZ(xyz...)
 end
 
-"""
-    Oklab(rgb::RGB)
-
-Create an Oklab color from an RGB color.
-"""
-Oklab(rgb::RGB) = rgb |> XYZ |> Oklab
-
-"""
-    RGB(lab::Oklab)
-
-Create an RGB color from an Oklab color.
-"""
-RGB(lab::Oklab) = lab |> XYZ |> RGB
-
+Oklab(color::AbstractColor) = Oklab(XYZ(color))
 
 end # module

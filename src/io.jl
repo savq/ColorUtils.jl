@@ -59,11 +59,6 @@ macro rgb_str(str::AbstractString)
     parse(RGB24, str)
 end
 
-# Print other color types
-
-Base.print(io::IO, color::AbstractColor) = print(io, RGB24(color))
-Base.show(io::IO, color::AbstractColor) = show(io, RGB24(color))
-
 hex(color::AbstractColor) = string(RGB24(color))
 
 end # module

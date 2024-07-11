@@ -3,7 +3,7 @@ Convertions between RGB and XYZ color spaces.
 """
 module RGBColors
 
-using ..ColorUtils: AbstractColor
+using ..ColorUtils: AbstractColor, XYZ
 
 """
     RGB(r, g, b)
@@ -25,12 +25,6 @@ struct RGB24 <: AbstractColor
     r::UInt8
     g::UInt8
     b::UInt8
-end
-
-struct XYZ <: AbstractColor
-    x::Float64
-    y::Float64
-    z::Float64
 end
 
 ## Use the same matrices as color.js
@@ -69,11 +63,18 @@ function XYZ((; r, g, b)::RGB)
     return XYZ((XYZ_from_RGB * rgbl)...)
 end
 
+RGB(color::AbstractColor) = RGB(XYZ(color))
+
+
+## RGB24
+
 RGB((; r, g, b)::RGB24) = RGB([r, g, b] ./ 255 ...)
 RGB24((; r, g, b)::RGB) = RGB24(round.(UInt8, [r, g, b] * 255)...)
-
-RGB24(color::AbstractColor) = color |> RGB |> RGB24
-
 RGB24(x::UInt32) = RGB24((x >> 16, x >> 8, x) .& 0xff...)
+
+RGB24(xyz::XYZ) = RGB24(RGB(xyz))
+XYZ(rgb::RGB24) = XYZ(RGB(rgb))
+
+RGB24(color::AbstractColor) = RGB24(XYZ(color))
 
 end # module

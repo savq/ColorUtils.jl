@@ -11,10 +11,22 @@ export
     RGB24,
     @rgb_str
 
+"""
+    AbstractColor
+
+Every subtype of AbstractColor must have conversions to and from the XYZ color
+space.
+"""
 abstract type AbstractColor end
 
+struct XYZ <: AbstractColor
+    x::Float64
+    y::Float64
+    z::Float64
+end
+
 include("./conversions/rgb.jl") # RGB24 <--> RGB <--> XYZ
-using .RGBColors: RGB, RGB24, XYZ
+using .RGBColors: RGB, RGB24
 
 include("./conversions/oklab.jl") # Oklab <--> XYZ
 using .OklabColors: Oklab

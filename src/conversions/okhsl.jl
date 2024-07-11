@@ -3,9 +3,9 @@ Convertions between Okhsl and Oklab color spaces.
 """
 module OkhslColors
 
-using ..ColorUtils: AbstractColor
+using ..ColorUtils: AbstractColor, XYZ
 using ..OklabColors: Oklab, XYZ_from_LMS, LMS_from_Lab
-using ..RGBColors: RGB, XYZ, RGB_from_XYZ
+using ..RGBColors: RGB_from_XYZ
 
 """
     Okhsl(h, s, l)
@@ -311,9 +311,9 @@ function Okhsl((; L, a, b)::Oklab)
     end
 end
 
-Okhsl(rgb::RGB) = rgb |> Oklab |> Okhsl
-RGB(hsl::Okhsl) = hsl |> Oklab |> RGB
+Okhsl(xyz::XYZ) = Okhsl(Oklab(xyz))
+XYZ(hsl::Okhsl) = XYZ(Oklab(hsl))
 
-Okhsl(color::AbstractColor) = color |> RGB |> Okhsl
+Okhsl(color::AbstractColor) = Okhsl(XYZ(color))
 
 end # module
