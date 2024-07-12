@@ -7,6 +7,7 @@ export
     Hsluv,
     Okhsl,
     Oklab,
+    Oklch,
     RGB,
     RGB24,
     @rgb_str
@@ -29,7 +30,7 @@ include("./conversions/rgb.jl") # RGB24 <--> RGB <--> XYZ
 using .RGBColors: RGB, RGB24
 
 include("./conversions/oklab.jl") # Oklab <--> XYZ
-using .OklabColors: Oklab
+using .OklabColors: Oklab, Oklch
 
 include("./conversions/okhsl.jl") # Okhsl <--> Oklab
 using .OkhslColors: Okhsl

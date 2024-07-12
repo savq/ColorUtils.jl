@@ -1,10 +1,10 @@
 """
-Convertions between Okhsl and Oklab color spaces.
+Convertions between Okhsl and Oklch color spaces.
 """
 module OkhslColors
 
 using ..ColorUtils: AbstractColor, XYZ
-using ..OklabColors: Oklab, XYZ_from_LMS, LMS_from_Lab
+using ..OklabColors: Oklab, Oklch, XYZ_from_LMS, LMS_from_Lab
 using ..RGBColors: RGB_from_XYZ
 
 """
@@ -14,11 +14,11 @@ Create an Okhsl color.
 """
 struct Okhsl <: AbstractColor
     "`Okhsl.h` is the hue in range \$[0, 360]\$"
-    h::Float64
+    h::Int
     "`Okhsl.s` is the saturation in range \$[0, 100]\$"
-    s::Float64
+    s::Int
     "`Okhsl.l` is the lightness in range \$[0, 100]\$"
-    l::Float64
+    l::Int
 end
 
 const RGB_from_LMS = RGB_from_XYZ * XYZ_from_LMS
@@ -216,16 +216,16 @@ end
 
 #= Conversions =#
 
-function Oklab((; h, s, l)::Okhsl)
-    (h, s, l) = (h / 360, s / 100, l / 100)
+function Oklch((; h, s, l)::Okhsl)
+    (s, l) = (s / 100, l / 100)
 
-    if l == 1.0 || l == 0.0
-        return Oklab(l, 0, 0)
+    if l == 0.0 || l == 1.0
+        return Oklch(l, 0, 0)
     end
 
     L = toe_inv(l)
-    a_ = cospi(2 * h)
-    b_ = sinpi(2 * h)
+    a_ = cospi(h / 180)
+    b_ = sinpi(h / 180)
 
     (c_0, c_mid, c_max) = get_Cs(L, a_, b_)
 
@@ -249,51 +249,49 @@ function Oklab((; h, s, l)::Okhsl)
         k2 = 1 - (k1 / (c_max - c_mid))
     end
 
-    c = k0 + t * k1 / (1 - k2 * t)
-    a = c * a_
-    b = c * b_
+    C = k0 + t * k1 / (1 - k2 * t)
 
-    return Oklab(L, a, b)
+    return Oklch(L, C, h)
 end
 
-function Okhsl((; L, a, b)::Oklab)
+function Okhsl((; L, C, h)::Oklch)
     s = 0.0
     l = toe(L)
 
-    c = sqrt(a ^ 2 + b ^ 2)
-    h = 0.5 + atan(-b, -a) / (2 * pi)
-
-    if l != 0.0 && l != 1.0 && c != 0
-        a_ = a / c
-        b_ = b / c
+    if l != 0.0 && l != 1.0 && C != 0
+        a_ = cospi(h / 180)
+        b_ = sinpi(h / 180)
 
         (c_0, c_mid, c_max) = get_Cs(L, a_, b_)
 
-        # Inverse of the interpolation Oklab(::Okhsl)
+        # Inverse of the interpolation Oklch(::Okhsl)
         mid = 0.8
         mid_inv = 1.25
 
-        if c < c_mid
+        if C < c_mid
             k0 = 0
             k1 = mid * c_0
             k2 = 1 - (k1 / c_mid)
 
-            t = (c - k0) / (k1 + k2 * (c - k0))
+            t = (C - k0) / (k1 + k2 * (C - k0))
             s = t * mid
         else
             k0 = c_mid
             k1 = (1 - mid) * (c_mid ^ 2) * (mid_inv ^ 2) / c_0
             k2 = 1 - k1 / (c_max - c_mid)
 
-            t = (c - k0) / (k1 + k2 * (c - k0))
+            t = (C - k0) / (k1 + k2 * (C - k0))
             s = mid + (1 - mid) * t
         end
     end
 
-    let (h, s, l) = round.((h * 360, s * 100, l * 100))
+    let (s, l) = round.(Int, (s * 100, l * 100))
         return Okhsl(h, s, l)
     end
 end
+
+Okhsl(lab::Oklab) = Okhsl(Oklch(lab))
+Oklab(hsl::Okhsl) = Oklab(Oklch(hsl))
 
 Okhsl(xyz::XYZ) = Okhsl(Oklab(xyz))
 XYZ(hsl::Okhsl) = XYZ(Oklab(hsl))

@@ -19,6 +19,20 @@ struct Oklab <: AbstractColor
     b::Float64
 end
 
+"""
+    Oklch(L, C, h)
+
+Create an Oklch color (a polar representation of Oklab).
+"""
+struct Oklch <: AbstractColor
+    "`Oklab.L` is the perceived lightness, in range \$[0, 1]\$. Same as Oklab."
+    L::Float64
+    "`Oklab.C` is the chroma, in range \$[0, 0.4]\$."
+    C::Float64
+    "`Oklab.h` is the hue, an angle in range \$[0, 360]\$."
+    h::Int64
+end
+
 const LMS_from_XYZ = [
     0.8190224379967030      0.3619062600528904      -0.1288737815209879
     0.0329836539323885      0.9292868615863434       0.0361446663506424
@@ -57,6 +71,24 @@ function XYZ((; L, a, b)::Oklab)
     return XYZ(xyz...)
 end
 
+function Oklab((; L, C, h)::Oklch)
+    C = C < 0 ? 0 : C
+    a = C * cospi(h / 180)
+    b = C * sinpi(h / 180)
+    return Oklab(L, a, b)
+end
+
+function Oklch((; L, a, b)::Oklab)
+    C = sqrt(a ^ 2 + b ^ 2)
+    h = 0.5 + atan(-b, -a) / (2 * pi)
+    return Oklch(L, C, round(Int, h * 360))
+    # return Oklch(L, C, h)
+end
+
+Oklch(xyz::XYZ) = Oklch(Oklab(xyz))
+XYZ(lch::Oklch) = XYZ(Oklab(lch))
+
 Oklab(color::AbstractColor) = Oklab(XYZ(color))
+Oklch(color::AbstractColor) = Oklch(XYZ(color))
 
 end # module
