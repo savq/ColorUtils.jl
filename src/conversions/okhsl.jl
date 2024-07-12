@@ -21,7 +21,6 @@ struct Okhsl <: AbstractColor
     l::Float64
 end
 
-# TODO: REMOVE?
 const RGB_from_LMS = RGB_from_XYZ * XYZ_from_LMS
 
 
@@ -51,17 +50,17 @@ function compute_max_saturation(a, b)
     # Max saturation will be when one of r, g or b goes below zero.
 
     # Select different coefficients depending on which component goes below zero first
-    if [-1.88170328, -0.80936493]' * [a, b] > 1
+    if [-1.8817031, -0.80936501]' * [a, b] > 1
         # Red component
-        k = [+1.19086277, +1.76576728, +0.59662641, +0.75515197, +0.56771245]
+        k = [1.19086277, 1.76576728, 0.59662641, 0.75515197, 0.56771245]
         w_lms = RGB_from_LMS[1, :]
-    elseif [1.81444104, -1.19445276]' * [a, b] > 1
+    elseif [1.8144408, -1.19445267]' * [a, b] > 1
         # Green component
-        k = [+0.73956515, -0.45954404, +0.08285427, +0.12541070, +0.14503204]
+        k = [0.73956515, -0.45954404, 0.08285427, 0.12541073, -0.14503204]
         w_lms = RGB_from_LMS[2, :]
     else
         # Blue component
-        k = [+1.35733652, -0.00915799, -1.15130210, -0.50559606, +0.00692167]
+        k = [1.35733652, -0.00915799, -1.1513021, -0.50559606, 0.00692167]
         w_lms = RGB_from_LMS[3, :]
     end
 
@@ -124,45 +123,30 @@ function find_gamut_intersection(a, b, l1, c1, l0, cusp=find_cusp(a, b))
         # Then one step Halley's method
         dl = l1 - l0
         dc = c1
-
         k_lms = LMS_from_Lab[:, 2:3] * [a, b]
-
-        lmsdt_ = dl .+ dc .* k_lms
+        lms_dt = dl .+ dc .* k_lms
 
         # If higher accuracy is required, 2 or 3 iterations of the following block can be used
-        begin
+        let
             l = l0 * (1 - t) + t * l1
             c = t * c1
 
             lms_ = l .+ c .* k_lms
             lms = lms_ .^ 3
-            lmsdt = 3 .* lmsdt_ .* (lms_ .^ 2)
-            lmsdt2 = 6 .* (lmsdt_ .^ 2) .* lms_
+            lmsdt = 3 .* lms_dt .* (lms_ .^ 2)
+            lmsdt2 = 6 .* (lms_dt .^ 2) .* lms_
 
-            ## NOTE: this part is very different from the reference implementation
-            w = hcat(lms, lmsdt, lmsdt2)
-            u(x) = x[2] / (x[2] * x[2] - 0.5 * (x[1] - 1) * x[3])
-
-            r = RGB_from_LMS[1, :]' * w
-            ur = u(r)
-            tr = -r[1] * ur
-
-            g = RGB_from_LMS[2, :]' * w
-            ug = u(g)
-            tg = -g[1] * ug
-
-            b = RGB_from_LMS[3, :]' * w
-            ub = u(b)
-            tb = -b[1] * ub
-
-            tr = (ur >= 0) ? tr : Inf
-            tg = (ug >= 0) ? tg : Inf
-            tb = (ub >= 0) ? tb : Inf
-
-            t += min(tr, tg, tb)
+            # NOTE(savq): This part is very different from the reference implementation
+            t += minimum(1:3) do i
+                # x is either r, g, b
+                x = RGB_from_LMS[i, :]' * hcat(lms, lmsdt, lmsdt2)
+                x[1] -= 1
+                u_x = x[2] / (x[2] ^ 2 - 0.5 * x[1] * x[3])
+                t_x = -x[1] * u_x
+                return u_x >= 0 ? t_x : Inf
+            end
         end
     end
-
     return t
 end
 
