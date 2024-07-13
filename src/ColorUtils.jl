@@ -10,6 +10,7 @@ export
     Oklch,
     RGB,
     RGB24,
+    get_contrast,
     get_distance,
     @rgb_str
 
@@ -41,6 +42,9 @@ using .HsluvColors: Hsluv, Hpluv, Lch, Luv
 
 include("./conversions/color8.jl") # Color8 <--> RGB24
 using .TermColors: Color8
+
+include("./apca.jl")
+using .APCA: get_contrast
 
 include("./distance.jl")
 using .ColorDistance: get_distance
