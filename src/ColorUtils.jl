@@ -10,6 +10,7 @@ export
     Oklch,
     RGB,
     RGB24,
+    get_distance,
     @rgb_str
 
 """
@@ -40,6 +41,9 @@ using .HsluvColors: Hsluv, Hpluv, Lch, Luv
 
 include("./conversions/color8.jl") # Color8 <--> RGB24
 using .TermColors: Color8
+
+include("./distance.jl")
+using .ColorDistance: get_distance
 
 include("./io.jl")
 using .ColorIO: hex, @rgb_str
