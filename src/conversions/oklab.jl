@@ -82,7 +82,6 @@ function Oklch((; L, a, b)::Oklab)
     C = sqrt(a ^ 2 + b ^ 2)
     h = 0.5 + atan(-b, -a) / (2 * pi)
     return Oklch(L, C, round(Int, h * 360))
-    # return Oklch(L, C, h)
 end
 
 Oklch(xyz::XYZ) = Oklch(Oklab(xyz))
