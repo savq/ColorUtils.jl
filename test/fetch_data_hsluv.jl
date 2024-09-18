@@ -35,4 +35,3 @@ function get_data()
     !isfile(path) && fetch_data(path)
     path |> read_data |> clean_data
 end
-
