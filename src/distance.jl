@@ -15,6 +15,6 @@ function get_distance(c1::Oklab, c2::Oklab)
     return sqrt(ΔL ^ 2 + Δa ^ 2 + Δb ^ 2)
 end
 
-get_distance(c1::AbstractColor, c2::AbstractColor) = distance(Oklab(c1), Oklab(c2))
+get_distance(c1::AbstractColor, c2::AbstractColor) = get_distance(Oklab(c1), Oklab(c2))
 
 end # module
