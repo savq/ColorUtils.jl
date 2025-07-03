@@ -9,10 +9,7 @@ using ..OklabColors: Oklab
 Calculate the color difference ΔEOK of two colors in Oklab color space.
 """
 function get_distance(c1::Oklab, c2::Oklab)
-    ΔL = c1.L - c2.L
-    Δa = c1.a - c2.a
-    Δb = c1.b - c2.b
-    return sqrt(ΔL ^ 2 + Δa ^ 2 + Δb ^ 2)
+    return hypot(c1.L - c2.L, c1.a - c2.a, c1.b - c2.b)
 end
 
 get_distance(c1::AbstractColor, c2::AbstractColor) = get_distance(Oklab(c1), Oklab(c2))
