@@ -3,7 +3,7 @@ Convertions between Oklab and XYZ color spaces.
 """
 module OklabColors
 
-using ..ColorUtils: AbstractColor, XYZ
+import ..ColorUtils: AbstractColor, XYZ
 
 """
     Oklab(L, a, b)

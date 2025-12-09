@@ -1,8 +1,8 @@
 # TODO: Rename module
 module TermColors
 
-using ..ColorUtils: AbstractColor, XYZ
-using ..RGBColors: RGB24
+import ..ColorUtils: AbstractColor, XYZ
+import ..RGBColors: RGB24
 
 """
     Color8(n::UInt8)

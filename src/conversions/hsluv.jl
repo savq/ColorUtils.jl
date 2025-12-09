@@ -3,7 +3,7 @@ An implementation of [HSLuv](https://github.com/hsluv/hsluv) (rev4).
 """
 module HsluvColors
 
-using ..ColorUtils: AbstractColor, XYZ
+import ..ColorUtils: AbstractColor, XYZ
 using ..RGBColors: RGB_from_XYZ
 
 struct Hsluv <: AbstractColor

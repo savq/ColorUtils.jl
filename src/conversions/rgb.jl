@@ -3,7 +3,7 @@ Convertions between RGB and XYZ color spaces.
 """
 module RGBColors
 
-using ..ColorUtils: AbstractColor, XYZ
+import ..ColorUtils: AbstractColor, XYZ
 
 """
     RGB(r, g, b)

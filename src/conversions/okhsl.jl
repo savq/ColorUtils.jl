@@ -3,8 +3,8 @@ Convertions between Okhsl and Oklch color spaces.
 """
 module OkhslColors
 
-using ..ColorUtils: AbstractColor, XYZ
-using ..OklabColors: Oklab, Oklch, XYZ_from_LMS, LMS_from_Lab
+import ..ColorUtils: AbstractColor, XYZ
+import ..OklabColors: Oklab, Oklch, XYZ_from_LMS, LMS_from_Lab
 using ..RGBColors: RGB_from_XYZ
 
 """
