@@ -47,10 +47,7 @@ include("./apca.jl")
 using .APCA: get_contrast
 
 include("./distance.jl")
-using .ColorDistance: get_distance
-
-include("./quantization.jl")
-using .Quantization: quantize, quantize_to_term_colors
+using .ColorDistance: get_distance, quantize, quantize_to_term_colors
 
 include("./io.jl")
 using .ColorIO: hex, @rgb_str
